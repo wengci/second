@@ -1,130 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>旋转的地球</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
-            overflow: hidden;
-        }
-
-        .universe {
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* 星空背景 */
-        .stars {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(2px 2px at 20px 30px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 50px 160px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0)),
-                radial-gradient(2px 2px at 160px 120px, #fff, rgba(0,0,0,0));
-            background-repeat: repeat;
-            background-size: 200px 200px;
-            animation: twinkle 4s infinite;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 0.4; }
-        }
-
-        /* 地球容器 - 用于3D透视 */
-        .earth-container {
-            perspective: 1000px;
-        }
-
-        /* 地球样式 */
-        .earth {
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            position: relative;
-            transform-style: preserve-3d;
-            animation: rotate 20s linear infinite;
-            box-shadow: inset -20px -10px 0 0 rgba(0, 0, 0, 0.2);
-        }
-
-        /* 地球表面纹理 */
-        .earth::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Earthmap1000x500compac.jpg/1024px-Earthmap1000x500compac.jpg');
-            background-size: cover;
-            background-repeat: repeat-x;
-            transform: rotateY(0deg);
-        }
-
-        /* 地球旋转动画 */
-        @keyframes rotate {
-            0% {
-                transform: rotateY(0deg);
-            }
-            100% {
-                transform: rotateY(360deg);
-            }
-        }
-
-        /* 地球周围的光晕效果 */
-        .earth::after {
-            content: '';
-            position: absolute;
-            top: -10%;
-            left: -10%;
-            width: 120%;
-            height: 120%;
-            border-radius: 50%;
-            background: radial-gradient(circle at center, rgba(100, 149, 237, 0.2) 0%, transparent 70%);
-            z-index: -1;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>打地鼠游戏</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .mole-hole {
+        @apply relative w-36 h-36 md:w-48 md:h-48 rounded-full overflow-hidden bg-amber-900/80 border-4 border-amber-900 shadow-inner;
+      }
+      .mole {
+        @apply absolute bottom-0 left-0 right-0 transition-all duration-300 ease-in-out transform origin-bottom;
+      }
+      .mole-hit {
+        animation: hitEffect 0.3s ease-in-out;
+      }
+      .hammer {
+        @apply absolute pointer-events-none w-20 h-20 z-50 opacity-0;
+      }
+      .hammer-swing {
+        animation: swing 0.3s ease-out;
+      }
+      .health-bar {
+        @apply h-5 bg-gray-200 rounded-full overflow-hidden;
+      }
+      .health-fill {
+        @apply h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all duration-300;
+      }
+    }
+    
+    @keyframes hitEffect {
+      0% { transform: scale(1) rotate(0); }
+      50% { transform: scale(0.8) rotate(15deg) translate(5px, 10px); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    
+    @keyframes swing {
+      0% { transform: rotate(0deg) scale(0.9); opacity: 1; }
+      50% { transform: rotate(-50deg) scale(1.2); opacity: 1; }
+      100% { transform: rotate(0deg) scale(0.9); opacity: 0; }
+    }
+    
+    @keyframes popUp {
+      0% { transform: translateY(100%); }
+      70% { transform: translateY(-10%); }
+      100% { transform: translateY(0); }
+    }
+    
+    @keyframes popDown {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(100%); }
+    }
+  </style>
 </head>
-<body>
-    <div class="universe">
-        <div class="stars"></div>
-        <div class="earth-container">
-            <div class="earth"></div>
-        </div>
-    </div>
 
-    <script>
-        // 可以在这里添加交互功能，比如鼠标拖动改变视角等
-        // 简单示例：点击暂停/继续旋转
-        const earth = document.querySelector('.earth');
-        let isRotating = true;
+<body class="min-h-screen bg-gradient-to-b from-emerald-50 to-emerald-100 flex flex-col items-center justify-center p-4 md:p-8">
+  <!-- 游戏标题 -->
+  <header class="mb-6 text-center">
+    <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-amber-800 drop-shadow-md mb-2">打地鼠</h1>
+    <p class="text-gray-600">点击地鼠用锤子击打它！</p>
+  </header>
+  
+  <!-- 游戏信息面板 -->
+  <div class="w-full max-w-md bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 mb-8">
+    <div class="flex justify-between items-center mb-2">
+      <span class="font-bold text-gray-700">地鼠生命值:</span>
+      <span id="health-text" class="font-bold text-rose-600">100</span>
+    </div>
+    <div class="health-bar">
+      <div id="health-fill" class="health-fill w-[100%]"></div>
+    </div>
+    <div class="mt-4">
+      <button id="reset-btn" class="bg-amber-700 hover:bg-amber-800 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center">
+        <i class="fa fa-refresh mr-2"></i> 重置游戏
+      </button>
+    </div>
+  </div>
+  
+  <!-- 游戏区域 -->
+  <main id="game-area" class="relative w-full max-w-2xl aspect-square md:aspect-[4/3] bg-emerald-600 rounded-3xl shadow-xl overflow-hidden mb-8">
+    <!-- 草地纹理 -->
+    <div class="absolute inset-0 opacity-20" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC41Ij48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLTZoLTJWNmgydjMwem0tNiAwaC00djJoNHYtMnptLTYgMGgtNHYyaDR2LTJ6bTEyIDE2aC00djJoNHYtMnptLTYgMGgtNHYyaDR2LTJ6bTEyLTE2aC00djJoNHYtMnptLTEyIDBoLTJ2NGgydi00em0xMiA2aC00djJoNHYtMnptLTYgMGgtNHYyaDR2LTJ6Ii8+PC9nPjwvZz48L3N2Zz4=');"></div>
+    
+    <!-- 地鼠洞 -->
+    <div class="mole-hole absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+      <div id="mole" class="mole" style="animation: popUp 0.5s forwards;">
+        <!-- 👇👇👇 地鼠图片替换处 👇👇👇 -->
+        <!-- 请将下面src中的图片地址替换为您自己的地鼠图片 -->
+        <!-- 例如：src="./my-mole.png" 或 src="您的图片URL" -->
+        <img src="ad186d4e97709dd8f517f2441ef07cbb.jpg" alt="地鼠" class="w-full h-auto object-contain">
+        <!-- 👆👆👆 地鼠图片替换处 👆👆👆 -->
+      </div>
+    </div>
+    
+    <!-- 锤子元素 -->
+    <div id="hammer" class="hammer">
+      <!-- 👇👇👇 锤子图片替换处 👇👇👇 -->
+      <!-- 如需更换锤子图片，替换下面的src地址即可 -->
+      <img src="e967175a01920ed13544efafb0b2cad6.jpg" alt="锤子" class="w-full h-full object-contain">
+      <!-- 👆👆👆 锤子图片替换处 👆👆👆 -->
+    </div>
+  </main>
+  
+  <!-- 音效 -->
+  <audio id="hit-sound" preload="auto">
+    <source src="https://assets.mixkit.co/sfx/preview/mixkit-hit-with-a-hammer-2072.mp3" type="audio/mpeg">
+  </audio>
+  
+  <script>
+    // 获取DOM元素
+    const mole = document.getElementById('mole');
+    const hammer = document.getElementById('hammer');
+    const gameArea = document.getElementById('game-area');
+    const healthFill = document.getElementById('health-fill');
+    const healthText = document.getElementById('health-text');
+    const resetBtn = document.getElementById('reset-btn');
+    const hitSound = document.getElementById('hit-sound');
+    
+    // 游戏状态
+    let moleHealth = 100;
+    
+    // 地鼠被击中事件
+    mole.addEventListener('click', (e) => {
+      // 计算点击位置，设置锤子出现的位置
+      const rect = gameArea.getBoundingClientRect();
+      const x = e.clientX - rect.left - hammer.offsetWidth / 2;
+      const y = e.clientY - rect.top - hammer.offsetHeight;
+      
+      // 设置锤子位置并执行挥动动画
+      hammer.style.left = `${x}px`;
+      hammer.style.top = `${y}px`;
+      hammer.classList.add('hammer-swing');
+      
+      // 播放击打音效
+      hitSound.currentTime = 0;
+      hitSound.play().catch(e => console.log('音效播放失败:', e));
+      
+      // 地鼠受击效果
+      mole.classList.add('mole-hit');
+      
+      // 减少生命值
+      moleHealth -= 20;
+      updateHealthDisplay();
+      
+      // 生命值归零时重置地鼠
+      if (moleHealth <= 0) {
+        mole.style.animation = 'popDown 0.5s forwards';
         
-        earth.addEventListener('click', () => {
-            if (isRotating) {
-                earth.style.animationPlayState = 'paused';
-            } else {
-                earth.style.animationPlayState = 'running';
-            }
-            isRotating = !isRotating;
-        });
-    </script>
+        setTimeout(() => {
+          resetMole();
+        }, 800);
+      }
+      
+      // 清除动画类，准备下次动画
+      setTimeout(() => {
+        mole.classList.remove('mole-hit');
+        hammer.classList.remove('hammer-swing');
+      }, 300);
+    });
+    
+    // 更新生命值显示
+    function updateHealthDisplay() {
+      const percentage = Math.max(0, moleHealth);
+      healthFill.style.width = `${percentage}%`;
+      healthText.textContent = percentage;
+    }
+    
+    // 重置地鼠状态
+    function resetMole() {
+      moleHealth = 100;
+      updateHealthDisplay();
+      mole.style.animation = 'popUp 0.5s forwards';
+    }
+    
+    // 重置游戏按钮
+    resetBtn.addEventListener('click', () => {
+      mole.style.animation = 'popDown 0.5s forwards';
+      
+      setTimeout(() => {
+        resetMole();
+      }, 500);
+    });
+  </script>
 </body>
 </html>
